@@ -1,27 +1,41 @@
-import { View, Text,StyleSheet,ScrollView ,SafeAreaView,Pressable} from 'react-native'
+import { View, Text,StyleSheet,ScrollView ,SafeAreaView,Pressable,TextInput,Button,Modal,TouchableOpacity,} from 'react-native'
 import {React,useState} from 'react'
 import DatePicker from "react-native-modern-datepicker"
 import {getFormatedDate} from "react-native-modern-datepicker"
 import AntDesign from '@expo/vector-icons/AntDesign';
 import Entypo from '@expo/vector-icons/Entypo';
+import axios from "axios";
 
 export default function calender  () {
   const today = new Date;
   const currentdate = getFormatedDate(today.setDate(today.getDate())+1,"YYYY/MM/DD");
   const[date ,handledatechange] = useState(currentdate);
-  const todos = [
-    {id:1,text:"wake early in the morning...."},
-    {id:2,text:"eat breakfast early..."},
-    {id:3,text:"eat breakfast early..."},
-    {id:4,text:"eat breakfast early..."},
-    {id:5,text:"eat breakfast early..."},
-    {id:6,text:"eat breakfast early..."},
-    {id:7,text:"eat breakfast early..."}
-  ]
+  const [modalVisible, setModalVisible] = useState(false);
+  const [text, settext] = useState("");
+  const [todos,settodos] = useState([]);
+
+
+
+  const handleSubmit = () => {
+    console.log("Submitted Value:", text);
+    setModalVisible(false); // Close the modal after submission
+
+    axios.post("http://192.168.0.106:5000/calender" , {date,text})
+    .then(res=>{
+      console.log(res);
+    })
+    .catch(err=>{
+      console.log(err);
+    })
+    settext(""); // Clear the input field
+  };
+
+
 
   function changedate(propdate){
     handledatechange(propdate);
   }
+
 
   const[show ,handleshow] = useState(currentdate);
   return (
@@ -66,7 +80,7 @@ export default function calender  () {
         </View>
 
         <Pressable
-                onPress={() => console.log('Pressed!')}
+                onPress={()=>setModalVisible(true)}
                 style={({ pressed }) => [
                   
                   styles.plus,
@@ -76,6 +90,32 @@ export default function calender  () {
            <AntDesign name="pluscircle" size={44} color="#009FBD" />
           </Pressable>         
         
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={modalVisible}
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalView}>
+            <Text style={styles.modalTitle}>Enter your input</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Type here..."
+              value={text}
+              onChangeText={(text) => settext(text)}
+            />
+            <View style={styles.buttonContainer}>
+              <Button title="Submit" onPress={handleSubmit} />
+              <Button
+                title="Cancel"
+                color="red"
+                onPress={() => setModalVisible(false)}
+              />
+            </View>
+          </View>
+        </View>
+      </Modal>
 
     </View>
     </SafeAreaView>
@@ -128,7 +168,47 @@ const styles = StyleSheet.create({
       textAlign:"left",
       fontSize:15,
       
-    }
+    },
+    modalContainer: {
+      flex: 1,
+      justifyContent: "center",
+      alignItems: "center",
+      backgroundColor: "rgba(0, 0, 0, 0.5)",
+    },
+    modalView: {
+      width: "80%",
+      backgroundColor: "#E8F9FF",
+      borderRadius: 20,
+      padding: 20,
+      alignItems: "center",
+      shadowColor: "#000",
+      shadowOffset: {
+        width: 0,
+        height: 2,
+      },
+      shadowOpacity: 0.25,
+      shadowRadius: 4,
+      elevation: 5,
+    },
+    modalTitle: {
+      fontSize: 18,
+      fontWeight: "bold",
+      marginBottom: 15,
+    },
+    input: {
+      height: 40,
+      width: "100%",
+      borderColor: "gray",
+      borderWidth: 1,
+      borderRadius: 10,
+      paddingHorizontal: 10,
+      marginBottom: 20,
+    },
+    buttonContainer: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      width: "100%",
+    },
 
 
 })
