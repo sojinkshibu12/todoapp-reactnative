@@ -1,5 +1,5 @@
 import { View, Text,StyleSheet,ScrollView ,SafeAreaView,Pressable,TextInput,Button,Modal,TouchableOpacity,} from 'react-native'
-import {React,useState} from 'react'
+import {React,useState,useEffect} from 'react'
 import DatePicker from "react-native-modern-datepicker"
 import {getFormatedDate} from "react-native-modern-datepicker"
 import AntDesign from '@expo/vector-icons/AntDesign';
@@ -8,21 +8,31 @@ import axios from "axios";
 
 export default function calender  () {
   const today = new Date;
+  const temp = [];
   const currentdate = getFormatedDate(today.setDate(today.getDate())+1,"YYYY/MM/DD");
   const[date ,handledatechange] = useState(currentdate);
   const [modalVisible, setModalVisible] = useState(false);
   const [text, settext] = useState("");
   const [todos,settodos] = useState([]);
-
-
+  const [data,setData] = useState([]);
+  const[show ,handleshow] = useState(currentdate);
+  function datecaller(){
+    console.log("super ")
+    console.log(date);
+    console.log(data[1].date);
+  }
+  
 
   const handleSubmit = () => {
     console.log("Submitted Value:", text);
     setModalVisible(false); // Close the modal after submission
+    datecaller();
 
     axios.post("http://192.168.0.106:5000/calender" , {date,text})
     .then(res=>{
-      console.log(res);
+      // console.log("item entered");
+      fetchData();
+      console.log(data);
     })
     .catch(err=>{
       console.log(err);
@@ -30,6 +40,31 @@ export default function calender  () {
     settext(""); // Clear the input field
   };
 
+  const fetchData = async () => {
+    try {
+      const response = await axios.get("http://192.168.0.106:5000/calender");
+      setData(response.data);
+
+      
+    } catch (err) {
+      console.log(err);
+    } 
+  };
+
+
+  function deletedata(id){
+    axios.post("http://192.168.0.106:5000/delete",{id})
+    .then(res=>{
+      // console.log("item deleted");
+      fetchData();
+    })
+    .catch(err=>{
+      console.log(err);
+    })
+  }
+  useEffect(() => {
+    fetchData();
+  }, []);
 
 
   function changedate(propdate){
@@ -37,7 +72,7 @@ export default function calender  () {
   }
 
 
-  const[show ,handleshow] = useState(currentdate);
+  
   return (
     <SafeAreaView>
     <View style={styles.main}>
@@ -58,7 +93,7 @@ export default function calender  () {
                 <View  style = {styles.holder}key={item.id} >
                   <Text style = {styles.holdertext}>{item.text}</Text>  
                   <Pressable
-                      onPress={() => console.log('fucked!')}
+                      onPress={()=>{deletedata(item.id)}}
                       style={({ pressed }) => [
                         {
                           opacity: pressed ? 0.5 : 1,
